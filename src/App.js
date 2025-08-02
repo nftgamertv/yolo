@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import cv from "@techstark/opencv-js";
-import { Tensor, InferenceSession } from "onnxruntime-web";
+import * as ort from "onnxruntime-web"; // Changed to import * as ort for access to env
 import Loader from "./components/loader";
 import { detectImage } from "./utils/detect";
 import { download } from "./utils/download";
@@ -27,21 +27,31 @@ const App = () => {
   cv["onRuntimeInitialized"] = async () => {
     const baseModelURL = `${process.env.PUBLIC_URL}/model`;
 
+    // Detect if on iOS or if SharedArrayBuffer (for multi-threading) is unavailable
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS || typeof SharedArrayBuffer === 'undefined') {
+      ort.env.wasm.numThreads = 1; // Fallback to single-threaded WASM (CPU) for iPhone compatibility
+      console.log('Fallback to single-threaded WASM enabled for better iOS support.');
+    } else {
+      // Optional: You can adjust threads based on device, but default is multi if available
+      ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
+    }
+
     // create session
     const arrBufNet = await download(
       `${baseModelURL}/${modelName}`, // url
       ["Loading YOLOv8 Segmentation model", setLoading] // logger
     );
-    const yolov8 = await InferenceSession.create(arrBufNet);
+    const yolov8 = await ort.InferenceSession.create(arrBufNet); // Updated to ort.InferenceSession
     const arrBufNMS = await download(
       `${baseModelURL}/nms-yolov8.onnx`, // url
       ["Loading NMS model", setLoading] // logger
     );
-    const nms = await InferenceSession.create(arrBufNMS);
+    const nms = await ort.InferenceSession.create(arrBufNMS); // Updated to ort.InferenceSession
 
     // warmup main model
     setLoading({ text: "Warming up model...", progress: null });
-    const tensor = new Tensor(
+    const tensor = new ort.Tensor( // Updated to ort.Tensor
       "float32",
       new Float32Array(modelInputShape.reduce((a, b) => a * b)),
       modelInputShape

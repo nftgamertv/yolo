@@ -10,6 +10,7 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
+    "kill": "taskkill /F /IM node.exe /T",
     "start": "craco start",
     "build": "craco build",
     "deploy": "gh-pages -d build"
