@@ -110,7 +110,7 @@ const App = () => {
               <strong>Total time (upload to detection):</strong> {inferenceTime.total}ms
             </p>
             <p>
-              <strong>Inference time:</strong> {inferenceTime.inference}ms
+              {/* <strong>Inference time:</strong> {inferenceTime.inference}ms */}
             </p>
           </div>
         )}
