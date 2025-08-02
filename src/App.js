@@ -37,17 +37,19 @@ const App = () => {
       ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
     }
 
-    // create session
+    // create session with WebGL preferred, fallback to WASM
+    const sessionOptions = { executionProviders: ['webgl', 'wasm'] };
+
     const arrBufNet = await download(
       `${baseModelURL}/${modelName}`, // url
       ["Loading YOLOv8 Segmentation model", setLoading] // logger
     );
-    const yolov8 = await ort.InferenceSession.create(arrBufNet); // Updated to ort.InferenceSession
+    const yolov8 = await ort.InferenceSession.create(arrBufNet, sessionOptions);
     const arrBufNMS = await download(
       `${baseModelURL}/nms-yolov8.onnx`, // url
       ["Loading NMS model", setLoading] // logger
     );
-    const nms = await ort.InferenceSession.create(arrBufNMS); // Updated to ort.InferenceSession
+    const nms = await ort.InferenceSession.create(arrBufNMS, sessionOptions);
 
     // warmup main model
     setLoading({ text: "Warming up model...", progress: null });
@@ -66,7 +68,7 @@ const App = () => {
     <div className="App">
       {loading && (
         <Loader>
-          {loading.progress ? `${loading.text} - ${loading.progress}%` : loading.text}
+          {loading.text} {/* Removed progress display to avoid INFINITY% issue */}
         </Loader>
       )}
       <div className="header">
